@@ -1,0 +1,14 @@
+[workspace.lints.rust]
+unsafe_code = "forbid"
+# unused = "allow"
+
+[workspace]
+resolver = "2"
+
+members = [
+    "crates/libs/lib-utils",
+    "crates/services/web-server",
+]
+
+[workspace.dependencies]
+time = { version = "0.3", features = ["formatting", "parsing", "serde"] }
