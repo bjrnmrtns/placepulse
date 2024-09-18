@@ -1,37 +1,23 @@
-use axum::http::StatusCode;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::extract::Path;
+use axum::response::{Html, IntoResponse};
+use axum::routing::get;
+use axum::Router;
 use lib_utils::b64::b64u_encode;
-use serde::{Deserialize, Serialize};
+
+async fn handler_hello(Path(name): Path<String>) -> impl IntoResponse {
+    println!("->> {:<12} - handler_hello2 {name:?}", "HANDLER");
+    Html(format!("Hello <strong>{name}</strong>"))
+}
+
+fn routes_hello() -> Router {
+    Router::new().route("/hello/:name", get(handler_hello))
+}
 
 #[tokio::main]
 async fn main() {
     let encoded_data = b64u_encode([0, 1, 2, 3]);
     println!("{}", encoded_data);
-    let app = Router::new().route("/", get(root)).route("/users", post(create_user));
+    let routes_all = Router::new().merge(routes_hello());
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
-
-async fn root() -> &'static str {
-    "Hello World!"
-}
-
-async fn create_user(Json(payload): Json<CreateUser>) -> (StatusCode, Json<User>) {
-    let user = User {
-        id: 1337,
-        username: payload.username,
-    };
-    (StatusCode::CREATED, Json(user))
-}
-
-#[derive(Deserialize)]
-struct CreateUser {
-    username: String,
-}
-
-#[derive(Serialize)]
-struct User {
-    id: u64,
-    username: String,
+    axum::serve(listener, routes_all).await.unwrap();
 }
