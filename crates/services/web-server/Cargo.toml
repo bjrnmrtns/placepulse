@@ -15,4 +15,10 @@ serde_json = "1"
 
 # -- web
 axum = { version = "0.7", features = ["macros"] }
+tower-cookies = "0.9"
 
+strum_macros = "0.25"
+
+[dev-dependencies]
+anyhow = "1"
+httpc-test = "0.1.8"
