@@ -7,6 +7,7 @@ use lib_utils::b64::b64u_encode;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::{json, Value};
+use tower_cookies::{Cookie, CookieManagerLayer, Cookies};
 
 pub const AUTH_TOKEN: &str = "auth-token";
 
@@ -45,15 +46,14 @@ fn routes_hello() -> Router {
     Router::new().route("/hello/:name", get(handler_hello))
 }
 
-async fn api_login(payload: Json<LoginPayload>) -> Result<Json<Value>> {
+async fn api_login(cookies: Cookies, payload: Json<LoginPayload>) -> Result<Json<Value>> {
     println!("--> {:<12} - api_login", "HANDLER");
 
     if payload.username != "demo1" || payload.pwd != "welcome" {
         return Err(Error::LoginFail);
     }
 
-    //TODO: Implement real auth-token generation/signature
-    //    cookies.add(Cookie::new(AUTH_TOKEN, "user-1.exp.sign"));
+    cookies.add(Cookie::new(AUTH_TOKEN, "user-1.exp.sign"));
 
     let body = Json(json!({
         "result": {
@@ -72,7 +72,10 @@ fn routes_login() -> Router {
 async fn main() {
     let encoded_data = b64u_encode([0, 1, 2, 3]);
     println!("{}", encoded_data);
-    let routes_all = Router::new().merge(routes_hello()).merge(routes_login());
+    let routes_all = Router::new()
+        .merge(routes_hello())
+        .merge(routes_login())
+        .layer(CookieManagerLayer::new());
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, routes_all).await.unwrap();
 }
