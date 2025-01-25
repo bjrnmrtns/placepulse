@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use askama::Template;
 use axum::{
-    extract::State,
+    extract::{Multipart, State},
     response::{Html, IntoResponse},
     routing::{get, post},
     Router,
@@ -31,6 +31,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/increment", post(increment))
+        .route("/upload", post(upload))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
@@ -50,4 +51,14 @@ async fn root(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
     };
     let html = template.render().unwrap();
     Html(html).into_response()
+}
+
+async fn upload(mut multipart: Multipart) -> impl IntoResponse {
+    if let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap().to_string();
+        let data = field.bytes().await.unwrap();
+
+        return Html(format!(r#"<li>{} nr of bytes: {}</li>"#, name, data.len())).into_response();
+    }
+    Html("<li>File upload failed</li>").into_response()
 }
