@@ -60,5 +60,5 @@ async fn upload(mut multipart: Multipart) -> impl IntoResponse {
 
         return Html(format!(r#"<li>{} nr of bytes: {}</li>"#, name, data.len())).into_response();
     }
-    Html("<li>File upload failed</li>").into_response()
+    Html("<li>file upload failed</li>").into_response()
 }

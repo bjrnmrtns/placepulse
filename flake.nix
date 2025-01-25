@@ -23,6 +23,7 @@
           rustup
           cargo
           cargo-edit
+          cargo-watch
           rustc
           rustfmt
           rust-analyzer
