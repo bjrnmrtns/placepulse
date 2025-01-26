@@ -56,9 +56,21 @@ async fn root(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
 async fn upload(mut multipart: Multipart) -> impl IntoResponse {
     if let Ok(Some(field)) = multipart.next_field().await {
         let name = field.name().unwrap().to_string();
-        let data = field.bytes().await.unwrap();
-
-        return Html(format!(r#"<li>{} nr of bytes: {}</li>"#, name, data.len())).into_response();
+        if let Ok(data) = field.bytes().await {
+            let len = data.len();
+            let cursor = std::io::Cursor::new(data);
+            if let Ok(gpx) = gpx::read(cursor) {
+                return Html(format!(
+                    r#"<li>name: {}, length {}, version: {}</li>"#,
+                    name, len, gpx.version
+                ))
+                .into_response();
+            } else {
+                return Html("<li>file is not a gpx file</li>").into_response();
+            }
+        } else {
+            return Html("<li>file upload failed</li>").into_response();
+        }
     }
-    Html("<li>file upload failed</li>").into_response()
+    Html("<li>no file to upload</li>").into_response()
 }
