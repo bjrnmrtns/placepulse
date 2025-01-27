@@ -7,6 +7,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use geo::{HaversineDistance, Point};
 
 #[derive(askama::Template)]
 #[template(path = "index.html")]
@@ -53,6 +54,23 @@ async fn root(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
     Html(html).into_response()
 }
 
+fn calculate_segment_distance(segment: &gpx::TrackSegment) -> f64 {
+    segment
+        .points
+        .windows(2)
+        .map(|window| {
+            let start = &window[0];
+            let end = &window[1];
+            Point::new(start.point().x(), start.point().y())
+                .haversine_distance(&Point::new(end.point().x(), end.point().y()))
+        })
+        .sum()
+}
+
+fn calculate_track_distance(track: &gpx::Track) -> f64 {
+    track.segments.iter().map(calculate_segment_distance).sum()
+}
+
 async fn upload(mut multipart: Multipart) -> impl IntoResponse {
     if let Ok(Some(field)) = multipart.next_field().await {
         let name = field.name().unwrap().to_string();
@@ -60,9 +78,10 @@ async fn upload(mut multipart: Multipart) -> impl IntoResponse {
             let len = data.len();
             let cursor = std::io::Cursor::new(data);
             if let Ok(gpx) = gpx::read(cursor) {
+                let distance: f64 = gpx.tracks.iter().map(calculate_track_distance).sum();
                 return Html(format!(
-                    r#"<li>name: {}, length {}, version: {}</li>"#,
-                    name, len, gpx.version
+                    r#"<li>name: {}, bytes {}, version: {}, track-length: {}</li>"#,
+                    name, len, gpx.version, distance
                 ))
                 .into_response();
             } else {
