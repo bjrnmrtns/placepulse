@@ -9,12 +9,14 @@ lib-utils = { path = "../../libs/lib-utils" }
 # -- async
 tokio = { version = "1", features = ["full"] }
 
-# -- json
+# -- formats
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+quick-xml = "0.37"
+gpx = "0.10"
+zip = "2.2.2"
 
 # -- other
-gpx = "0.10"
 geo = "0.26"
 
 # -- web

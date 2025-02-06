@@ -1,4 +1,6 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    fs::File, io::{BufRead, BufReader}, sync::{Arc, Mutex}
+};
 
 use askama::Template;
 use axum::{
@@ -8,6 +10,8 @@ use axum::{
     Router,
 };
 use geo::{HaversineDistance, Point};
+use quick_xml::{events::Event, Reader};
+use zip::ZipArchive;
 
 #[derive(askama::Template)]
 #[template(path = "index.html")]
@@ -28,6 +32,7 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
+    parse_camt053_zip();
     let state = Arc::new(Mutex::new(AppState { counter: 0 }));
     let app = Router::new()
         .route("/", get(root))
@@ -69,6 +74,35 @@ fn calculate_segment_distance(segment: &gpx::TrackSegment) -> f64 {
 
 fn calculate_track_distance(track: &gpx::Track) -> f64 {
     track.segments.iter().map(calculate_segment_distance).sum()
+}
+
+fn parse_camt053_zip() {
+    let zip_file =
+        File::open("/home/bjorn/projects/personal/Documents/bank-transations/2024/203221559_060225200121.zip").unwrap();
+    let mut zip_archive = ZipArchive::new(zip_file).unwrap();
+    for i in 0..zip_archive.len() {
+        let mut file = zip_archive.by_index(i).unwrap();
+        let reader = BufReader::new(&mut file);
+        parse_camt053(reader);
+    }
+}
+
+fn parse_camt053<R: BufRead>(reader: R) {
+        let mut buf = Vec::new();
+        let mut xml_reader = Reader::from_reader(reader);
+        match xml_reader.read_event_into(&mut buf) {
+            Ok(Event::Eof) => println!("EOF"),
+            Ok(Event::Start(e)) => match e.name().as_ref() {
+                b"Stmt" => println!(
+                    "attributes values: {:?}",
+                    e.attributes().map(|a| a.unwrap().value).collect::<Vec<_>>()
+                ),
+                _ => (),
+            },
+            Ok(Event::Text(e)) => println!("Text: {:?}", e.unescape()),
+            Err(_) => panic!("error bitch"),
+            _ => (),
+        }
 }
 
 async fn upload(mut multipart: Multipart) -> impl IntoResponse {
