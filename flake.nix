@@ -28,6 +28,7 @@
           rustfmt
           rust-analyzer
           clippy
+          gdb
         ];
         shellHook = ''
           rustup component add rust-analyzer

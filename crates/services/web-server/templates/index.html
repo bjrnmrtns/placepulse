@@ -4,21 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Counter App</title>
+    <title>Starting fire</title>
     <script src="https://unpkg.com/htmx.org@1.9.0"></script>
 </head>
 <body>
-    <h1>Counter App</h1>
-    <p>Value: <span id="counter">{{ counter }}</span></p>
-    <button hx-post="/increment" hx-target="#counter" hx-swap="innerHTML">
-        +1
-    </button>
-    <ul id="activity-list">
+    <h1>Transactions</h1>
+    <ul id="transactions">
+        {% for document in documents %}
+        <li>
+            {% for entry in document.bk_to_cstmr_stmt.stmt.ntry %}
+                ${{document.bk_to_cstmr_stmt.stmt.id}} ${{entry.amt}}
+            {% endfor %}
+        </li>
+        {% endfor %}
     </ul>
-    <form hx-post="/upload" hx-target="#activity-list" hx-swap="beforeend" enctype="multipart/form-data">
-        <input type="file" name="file" required />
-        <button type="submit">Upload</button>
-    </form>
 </body>
 </html>
 
