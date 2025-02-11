@@ -38,7 +38,8 @@ async fn main() {
 }
 
 async fn root(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
-    let documents = state.lock().unwrap().documents.clone();
+    let mut documents = state.lock().unwrap().documents.clone();
+    documents.sort_by(|a, b| a.bk_to_cstmr_stmt.stmt.ntry[0].val_dt.dt.cmp(&b.bk_to_cstmr_stmt.stmt.ntry[0].val_dt.dt));
     let template = RootTemplate { documents };
     let html = template.render().unwrap();
     Html(html).into_response()
@@ -92,6 +93,14 @@ struct Bal {
 struct Ntry {
     amt: f64,
     cdt_dbt_ind: String,
+    val_dt: ValDt,
+}
+
+#[allow(dead_code)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct ValDt {
+    dt: String,
 }
 
 #[allow(dead_code)]

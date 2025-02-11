@@ -9,15 +9,23 @@
 </head>
 <body>
     <h1>Transactions</h1>
-    <ul id="transactions">
-        {% for document in documents %}
-        <li>
-            {% for entry in document.bk_to_cstmr_stmt.stmt.ntry %}
-                ${{document.bk_to_cstmr_stmt.stmt.id}} ${{entry.amt}}
+    <table id="transactions">
+        <thead><tr><th>Balance</th><th>Amount</th></thead>
+        <tbody>
+            {% for document in documents %}
+            <tr>
+                <td>
+                {% for bal in document.bk_to_cstmr_stmt.stmt.bal %}
+                {{bal.amt}}
+                {% endfor %}
+                </td>
+                <td>
+                {% for entry in document.bk_to_cstmr_stmt.stmt.ntry %}
+                {{entry.val_dt.dt}} {{entry.amt}}
+                {% endfor %}
+                </td>
+            </tr>
             {% endfor %}
-        </li>
-        {% endfor %}
-    </ul>
+        </tbody>
+    </table>
 </body>
-</html>
-
